@@ -112,8 +112,12 @@ class Calculator(tk.Frame):
 
         elif op != self.equals:
             field_val = int(self.field.get())
-            self.temp_val = self.temp_op(field_val, self.temp_val)
-            self.temp_op = op
+            if self.temp_op == self.equals:
+                self.temp_op = op
+                # and pass setting temp_val, remains the same
+            else:
+                self.temp_val = self.temp_op(field_val, self.temp_val)
+                self.temp_op = op
 
             # reset field:
             field_output = self.temp_val
@@ -123,7 +127,7 @@ class Calculator(tk.Frame):
         else: # when op == self.equals
             field_val = int(self.field.get())
             self.temp_val = self.temp_op(field_val, self.temp_val)
-            self.temp_op = None # I think?
+            self.temp_op = self.equals
 
             # reset field:
             field_output = self.temp_val
