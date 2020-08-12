@@ -13,6 +13,13 @@ class Calculator(tk.Frame):
         self.create_field()
         self.create_buttons()
 
+        # Temporary value and operation:
+        self.temp_val = None
+        self.temp_op  = None
+
+        # State marker for field:
+        self.field_refresh = False
+
     def create_field(self):
         self.field = tk.Entry(self)
         self.field.grid(row=0,
@@ -23,38 +30,38 @@ class Calculator(tk.Frame):
 
     def create_buttons(self):
         self.btn_1 = tk.Button(self, text="1", padx=40, pady=20,
-                command=lambda: self.button_click(1))
+                command=lambda: self.num_click(1))
         self.btn_2 = tk.Button(self, text="2", padx=40, pady=20,
-                command=lambda: self.button_click(2))
+                command=lambda: self.num_click(2))
         self.btn_3 = tk.Button(self, text="3", padx=40, pady=20,
-                command=lambda: self.button_click(3))
+                command=lambda: self.num_click(3))
         self.btn_4 = tk.Button(self, text="4", padx=40, pady=20,
-                command=lambda: self.button_click(4))
+                command=lambda: self.num_click(4))
         self.btn_5 = tk.Button(self, text="5", padx=40, pady=20,
-                command=lambda: self.button_click(5))
+                command=lambda: self.num_click(5))
         self.btn_6 = tk.Button(self, text="6", padx=40, pady=20,
-                command=lambda: self.button_click(6))
+                command=lambda: self.num_click(6))
         self.btn_7 = tk.Button(self, text="7", padx=40, pady=20,
-                command=lambda: self.button_click(7))
+                command=lambda: self.num_click(7))
         self.btn_8 = tk.Button(self, text="8", padx=40, pady=20,
-                command=lambda: self.button_click(8))
+                command=lambda: self.num_click(8))
         self.btn_9 = tk.Button(self, text="9", padx=40, pady=20,
-                command=lambda: self.button_click(9))
+                command=lambda: self.num_click(9))
         self.btn_0 = tk.Button(self, text="0", padx=85, pady=20,
-                command=lambda: self.button_click(0))
+                command=lambda: self.num_click(0))
 
         self.btn_c = tk.Button(self, text="C", padx=40, pady=20,
                 command=self.clear_field)
         self.btn_e = tk.Button(self, text="=", padx=40, pady=20,
-                command=self.equals)
+                command=lambda: self.button_click(self.equals))
         self.btn_a = tk.Button(self, text="+", padx=40, pady=20,
-                command=self.add)
+                command=lambda: self.button_click(self.add))
         self.btn_s = tk.Button(self, text="-", padx=40, pady=20,
-                command=self.subtract)
+                command=lambda: self.button_click(self.subtract))
         self.btn_m = tk.Button(self, text="x", padx=40, pady=20,
-                command=self.multiply)
+                command=lambda: self.button_click(self.multiply))
         self.btn_d = tk.Button(self, text="/", padx=40, pady=20,
-                command=self.divide)
+                command=lambda: self.button_click(self.divide))
 
         # Place buttons:
         self.btn_1.grid(row=4, column=0)
@@ -75,28 +82,73 @@ class Calculator(tk.Frame):
         self.btn_m.grid(row=2, column=3)
         self.btn_d.grid(row=1, column=3)
 
-    def button_click(self, num):
-        field_val = self.field.get()
-        self.field.delete(0, tk.END)
-        self.field.insert(0, str(field_val) + str(num))
+    def num_click(self, num):
+        if self.field_refresh == True:
+            self.field.delete(0, tk.END)
+            self.field.insert(0, str(num))
+            self.field_refresh = False
+        else:
+            field_val = self.field.get()
+            self.field.delete(0, tk.END)
+            self.field.insert(0, str(field_val) + str(num))
+
+    def button_click(self, op):
+        """
+        Performs or appends operations. If op already set in self.temp_op,
+        perform self.temp_op and append op, otherwise only append op.
+        """
+        # marker for nums to whipe field next click
+        self.field_refresh = True
+
+        # if field is empty, do nothing:
+        if self.field.get() == '': # is an empty field.get() really ''?
+            return None
+
+        # otherwise, load val and op:
+        if op != self.equals and self.temp_val==None:
+            field_val = int(self.field.get())
+            self.temp_val = field_val
+            self.temp_op = op
+
+        elif op != self.equals:
+            field_val = int(self.field.get())
+            self.temp_val = self.temp_op(field_val, self.temp_val)
+            self.temp_op = op
+
+            # reset field:
+            field_output = self.temp_val
+            self.field.delete(0, tk.END)
+            self.field.insert(0, str(field_output))
+
+        else: # when op == self.equals
+            field_val = int(self.field.get())
+            self.temp_val = self.temp_op(field_val, self.temp_val)
+            self.temp_op = None # I think?
+
+            # reset field:
+            field_output = self.temp_val
+            self.field.delete(0, tk.END)
+            self.field.insert(0, str(field_output))
 
     def clear_field(self):
         self.field.delete(0, tk.END)
+        self.temp_val = None
+        self.temp_op = None
 
     def equals(self):
         pass
 
-    def add(self):
-        pass
+    def add(self, num_1, num_2):
+        return num_1 + num_2
 
-    def subtract(self):
-        pass
+    def subtract(self, sub_val, sub_from):
+        return sub_from - sub_val
 
-    def multiply(self):
-        pass
+    def multiply(self, num_1, num_2):
+        return num_1 * num_2
 
-    def divide(self):
-        pass
+    def divide(self, divisor, dividend):
+        return dividend / divisor
 
 root = tk.Tk()
 calc = Calculator(root)
