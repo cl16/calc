@@ -62,6 +62,8 @@ class Calculator(tk.Frame):
                 command=lambda: self.button_click(self.multiply))
         self.btn_d = tk.Button(self, text="/", padx=40, pady=20,
                 command=lambda: self.button_click(self.divide))
+        self.btn_p = tk.Button(self, text=".", padx=40, pady=20,
+                command=self.per_click)
 
         # Place buttons:
         self.btn_1.grid(row=4, column=0)
@@ -82,6 +84,8 @@ class Calculator(tk.Frame):
         self.btn_m.grid(row=2, column=3)
         self.btn_d.grid(row=1, column=3)
 
+        self.btn_p.grid(row=5, column=2)
+
     def num_click(self, num):
         if self.field_refresh == True:
             self.field.delete(0, tk.END)
@@ -92,6 +96,17 @@ class Calculator(tk.Frame):
             self.field.delete(0, tk.END)
             self.field.insert(0, str(field_val) + str(num))
 
+    def per_click(self):
+        if self.field_refresh == True:
+            self.field.delete(0, tk.END)
+            self.field.insert(0, ".")
+            self.field_refresh = False
+        else:
+            field_val = self.field.get()
+            self.field.delete(0, tk.END)
+            self.field.insert(0, str(field_val) + ".")
+        
+
     def button_click(self, op):
         """
         Performs or appends operations. If op already set in self.temp_op,
@@ -100,18 +115,25 @@ class Calculator(tk.Frame):
         # marker for nums to whipe field next click
         self.field_refresh = True
 
+        # Get value in field:
+        field_val = self.field.get()
+
         # if field is empty, do nothing:
-        if self.field.get() == '': # is an empty field.get() really ''?
+        if field_val == '': # is an empty field.get() really ''?
             return None
+
+        # set type of field value:
+        elif '.' in field_val:
+            field_val = float(field_val)
+        else:
+            field_val = int(field_val)
 
         # otherwise, load val and op:
         if op != self.equals and self.temp_val==None:
-            field_val = int(self.field.get())
             self.temp_val = field_val
             self.temp_op = op
 
         elif op != self.equals:
-            field_val = int(self.field.get())
             if self.temp_op == self.equals:
                 self.temp_op = op
                 # and pass setting temp_val, remains the same
@@ -121,16 +143,25 @@ class Calculator(tk.Frame):
 
             # reset field:
             field_output = self.temp_val
+
+            # prefer int if no decimal val
+            if field_output % 1 == 0:
+                field_output = int(field_output)
+
             self.field.delete(0, tk.END)
             self.field.insert(0, str(field_output))
 
         else: # when op == self.equals
-            field_val = int(self.field.get())
             self.temp_val = self.temp_op(field_val, self.temp_val)
             self.temp_op = self.equals
 
             # reset field:
             field_output = self.temp_val
+
+            # prefer int if no decimal val
+            if field_output % 1 == 0:
+                field_output = int(field_output)
+
             self.field.delete(0, tk.END)
             self.field.insert(0, str(field_output))
 
