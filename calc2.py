@@ -64,6 +64,8 @@ class Calculator(tk.Frame):
                 command=lambda: self.button_click(self.divide))
         self.btn_p = tk.Button(self, text=".", padx=40, pady=20,
                 command=self.per_click)
+        self.btn_pm = tk.Button(self, text="+/-", padx=40, pady=20,
+                command=self.sign_reverse)
 
         # Place buttons:
         self.btn_1.grid(row=4, column=0)
@@ -85,6 +87,7 @@ class Calculator(tk.Frame):
         self.btn_d.grid(row=1, column=3)
 
         self.btn_p.grid(row=5, column=2)
+        self.btn_pm.grid(row=1, column=1)
 
     def num_click(self, num):
         if self.field_refresh == True:
@@ -105,7 +108,21 @@ class Calculator(tk.Frame):
             field_val = self.field.get()
             self.field.delete(0, tk.END)
             self.field.insert(0, str(field_val) + ".")
-        
+
+    def sign_reverse(self):
+        """
+        Reverse the sign of any non-zero field val, using '-' prefix. Int/
+        float conversion will handle numeric sign.
+        """
+        field_val = self.field.get()
+        if field_val != '0' and self.field_refresh == False:
+            if field_val[0] == '-':
+                field_val = field_val[1:]
+            else:
+                field_val = '-' + field_val
+            # replace:
+            self.field.delete(0, tk.END)
+            self.field.insert(0, field_val)
 
     def button_click(self, op):
         """
@@ -138,7 +155,10 @@ class Calculator(tk.Frame):
                 self.temp_op = op
                 # and pass setting temp_val, remains the same
             else:
+                # Perform calculation:
+                
                 self.temp_val = self.temp_op(field_val, self.temp_val)
+                print(self.temp_val)
                 self.temp_op = op
 
             # reset field:
