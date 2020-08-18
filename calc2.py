@@ -1,7 +1,7 @@
 """
 Object-based version of calculator app.
 """
-import tkinter as tk
+import tkinter as tk  
 
 
 class Calculator(tk.Frame):
@@ -11,14 +11,24 @@ class Calculator(tk.Frame):
         self.master = master
         self.pack()
         self.create_field()
-        self.create_buttons()
+        self.create_buttons() 
+        self.field_overwrite = True
+        self.sign = True
 
-        # Temporary value and operation:
+        self.val = None
+        self.opr = None
+
+        self.last_num = None
+        self.last_opr = None
+
         self.temp_val = None
-        self.temp_op  = None
-
-        # State marker for field:
-        self.field_refresh = False
+        self.temp_opr = None
+        
+        self.ord = {self.multiply: 2,
+                    self.divide:   2,
+                    self.add:      1,
+                    self.subtract: 1,
+                    self.equals:   0}
 
     def create_field(self):
         self.field = tk.Entry(self)
@@ -26,46 +36,149 @@ class Calculator(tk.Frame):
                         column=0,
                         columnspan=5,
                         padx=5,
-                        pady=5)
+                        pady=5,
+                        ipadx=35,
+                        ipady=10)
+
+    def get_field(self):
+        field_str = self.field.get()
+        if '.' in field_str:
+            num = float(field_str)
+            if num % 1 == 0:
+                num = int(num)
+        else:
+            num = int(field_str)
+        return num
+
+    def put_field(self, value, current=False):
+        if isinstance(value, float):
+            if value % 1 == 0:
+                value = int(value)
+        if current:
+            current_val = self.field.get()
+        value = current_val + str(value) if current else str(value)
+        self.field.delete(0, tk.END)
+        self.field.insert(0, value)
+
+    def num_click(self, num):
+        if self.field_overwrite == True:
+            self.put_field(num)
+            self.last_num = self.get_field()
+            self.field_overwrite = False
+        else:
+            self.put_field(num, current=True)
+            self.last_num = self.get_field()
+    
+    def opr_click(self, opr):
+        self.field_overwrite = True
+        self.last_opr = opr
+        if self.opr != None and self.ord[opr] > self.ord[self.opr]:
+            self.temp_val = self.val
+            self.temp_opr = self.opr
+            self.val = self.get_field()
+            self.opr = opr
+        else:
+            if self.opr == None:
+                self.opr = opr
+                self.val = self.get_field()
+            else:
+                self.equals()
+                if self.temp_val != None:
+                    self.equals(temp=True)
+                self.opr = opr
+                self.val = self.get_field()
+
+
+    def per_click(self):
+        return None
+
+    def clear_field(self):
+        self.field.delete(0, tk.END)
+        self.temp_val = None
+        self.temp_op = None
+        self.field_overwrite = True
+
+    def equals(self, temp=False):
+        self.field_overwrite = True
+        temp = True if self.temp_val != None else temp
+        cur_opr = self.opr if self.opr != None else self.last_opr
+        if temp==False:
+            self.val = cur_opr(self.val, self.last_num) # change to multi-digit num ability
+            self.field.delete(0, tk.END)
+            self.field.insert(0, str(self.val))
+            self.opr = None
+        else:
+            self.val = cur_opr(self.val, self.last_num)
+            self.val = self.temp_opr(self.temp_val, self.val)
+            self.field.delete(0, tk.END)
+            self.field.insert(0, str(self.val))
+            self.opr = None
+
+            # used temp_val, temp_opr, reset:
+            self.temp_val = None
+            self.temp_opr = None
+
+    def add(self, num_1, num_2):
+        return num_1 + num_2
+
+    def subtract(self, num_1, num_2):
+        return num_1 - num_2
+
+    def multiply(self, num_1, num_2):
+        return num_1 * num_2
+
+    def divide(self, dividend, divisor):
+        return dividend / divisor
+
+    def plusMinus(self):
+        field_val = self.get_field()
+        if field_val == 0:
+            return None
+        else:
+            value = field_val * -1
+            self.field_overwrite=True
+            self.num_click(value)
 
     def create_buttons(self):
-        self.btn_1 = tk.Button(self, text="1", padx=40, pady=20,
+        self.btn_1 = tk.Button(self, text="1", height=3, width=6,
                 command=lambda: self.num_click(1))
-        self.btn_2 = tk.Button(self, text="2", padx=40, pady=20,
+        self.btn_2 = tk.Button(self, text="2", height=3, width=6,
                 command=lambda: self.num_click(2))
-        self.btn_3 = tk.Button(self, text="3", padx=40, pady=20,
+        self.btn_3 = tk.Button(self, text="3", height=3, width=6,
                 command=lambda: self.num_click(3))
-        self.btn_4 = tk.Button(self, text="4", padx=40, pady=20,
+        self.btn_4 = tk.Button(self, text="4", height=3, width=6,
                 command=lambda: self.num_click(4))
-        self.btn_5 = tk.Button(self, text="5", padx=40, pady=20,
+        self.btn_5 = tk.Button(self, text="5", height=3, width=6,
                 command=lambda: self.num_click(5))
-        self.btn_6 = tk.Button(self, text="6", padx=40, pady=20,
+        self.btn_6 = tk.Button(self, text="6", height=3, width=6,
                 command=lambda: self.num_click(6))
-        self.btn_7 = tk.Button(self, text="7", padx=40, pady=20,
+        self.btn_7 = tk.Button(self, text="7", height=3, width=6,
                 command=lambda: self.num_click(7))
-        self.btn_8 = tk.Button(self, text="8", padx=40, pady=20,
+        self.btn_8 = tk.Button(self, text="8", height=3, width=6,
                 command=lambda: self.num_click(8))
-        self.btn_9 = tk.Button(self, text="9", padx=40, pady=20,
+        self.btn_9 = tk.Button(self, text="9", height=3, width=6,
                 command=lambda: self.num_click(9))
-        self.btn_0 = tk.Button(self, text="0", padx=85, pady=20,
+        self.btn_0 = tk.Button(self, text="0", height=3, width=13,
                 command=lambda: self.num_click(0))
 
-        self.btn_c = tk.Button(self, text="C", padx=40, pady=20,
+        self.btn_c = tk.Button(self, text="C", height=3, width=6,
                 command=self.clear_field)
-        self.btn_e = tk.Button(self, text="=", padx=40, pady=20,
-                command=lambda: self.button_click(self.equals))
-        self.btn_a = tk.Button(self, text="+", padx=40, pady=20,
-                command=lambda: self.button_click(self.add))
-        self.btn_s = tk.Button(self, text="-", padx=40, pady=20,
-                command=lambda: self.button_click(self.subtract))
-        self.btn_m = tk.Button(self, text="x", padx=40, pady=20,
-                command=lambda: self.button_click(self.multiply))
-        self.btn_d = tk.Button(self, text="/", padx=40, pady=20,
-                command=lambda: self.button_click(self.divide))
-        self.btn_p = tk.Button(self, text=".", padx=40, pady=20,
+        self.btn_e = tk.Button(self, text="=", height=3, width=6,
+                command=self.equals)
+        self.btn_a = tk.Button(self, text="+", height=3, width=6,
+                command=lambda: self.opr_click(self.add))
+        self.btn_s = tk.Button(self, text="-", height=3, width=6,
+                command=lambda: self.opr_click(self.subtract))
+        self.btn_m = tk.Button(self, text="x", height=3, width=6,
+                command=lambda: self.opr_click(self.multiply))
+        self.btn_d = tk.Button(self, text="/", height=3, width=6,
+                command=lambda: self.opr_click(self.divide))
+        self.btn_p = tk.Button(self, text=".", height=3, width=6,
                 command=self.per_click)
-        self.btn_pm = tk.Button(self, text="+/-", padx=40, pady=20,
-                command=self.sign_reverse)
+        self.btn_pm = tk.Button(self, text="+/-", height=3, width=6,
+                command=self.plusMinus)
+        self.btn_pc = tk.Button(self, text="%", height=3, width=6,
+                command=lambda: None)
 
         # Place buttons:
         self.btn_1.grid(row=4, column=0)
@@ -88,122 +201,7 @@ class Calculator(tk.Frame):
 
         self.btn_p.grid(row=5, column=2)
         self.btn_pm.grid(row=1, column=1)
-
-    def num_click(self, num):
-        if self.field_refresh == True:
-            self.field.delete(0, tk.END)
-            self.field.insert(0, str(num))
-            self.field_refresh = False
-        else:
-            field_val = self.field.get()
-            self.field.delete(0, tk.END)
-            self.field.insert(0, str(field_val) + str(num))
-
-    def per_click(self):
-        if self.field_refresh == True:
-            self.field.delete(0, tk.END)
-            self.field.insert(0, ".")
-            self.field_refresh = False
-        else:
-            field_val = self.field.get()
-            self.field.delete(0, tk.END)
-            self.field.insert(0, str(field_val) + ".")
-
-    def sign_reverse(self):
-        """
-        Reverse the sign of any non-zero field val, using '-' prefix. Int/
-        float conversion will handle numeric sign.
-        """
-        field_val = self.field.get()
-        if field_val != '0' and self.field_refresh == False:
-            if field_val[0] == '-':
-                field_val = field_val[1:]
-            else:
-                field_val = '-' + field_val
-            # replace:
-            self.field.delete(0, tk.END)
-            self.field.insert(0, field_val)
-
-    def button_click(self, op):
-        """
-        Performs or appends operations. If op already set in self.temp_op,
-        perform self.temp_op and append op, otherwise only append op.
-        """
-        # marker for nums to whipe field next click
-        self.field_refresh = True
-
-        # Get value in field:
-        field_val = self.field.get()
-
-        # if field is empty, do nothing:
-        if field_val == '': # is an empty field.get() really ''?
-            return None
-
-        # set type of field value:
-        elif '.' in field_val:
-            field_val = float(field_val)
-        else:
-            field_val = int(field_val)
-
-        # otherwise, load val and op:
-        if op != self.equals and self.temp_val==None:
-            self.temp_val = field_val
-            self.temp_op = op
-
-        elif op != self.equals:
-            if self.temp_op == self.equals:
-                self.temp_op = op
-                # and pass setting temp_val, remains the same
-            else:
-                # Perform calculation:
-                
-                self.temp_val = self.temp_op(field_val, self.temp_val)
-                print(self.temp_val)
-                self.temp_op = op
-
-            # reset field:
-            field_output = self.temp_val
-
-            # prefer int if no decimal val
-            if field_output % 1 == 0:
-                field_output = int(field_output)
-
-            self.field.delete(0, tk.END)
-            self.field.insert(0, str(field_output))
-
-        else: # when op == self.equals
-            self.temp_val = self.temp_op(field_val, self.temp_val)
-            self.temp_op = self.equals
-
-            # reset field:
-            field_output = self.temp_val
-
-            # prefer int if no decimal val
-            if field_output % 1 == 0:
-                field_output = int(field_output)
-
-            self.field.delete(0, tk.END)
-            self.field.insert(0, str(field_output))
-
-    def clear_field(self):
-        self.field.delete(0, tk.END)
-        self.temp_val = None
-        self.temp_op = None
-
-    def equals(self):
-        pass
-
-    def add(self, num_1, num_2):
-        return num_1 + num_2
-
-    def subtract(self, sub_val, sub_from):
-        return sub_from - sub_val
-
-    def multiply(self, num_1, num_2):
-        return num_1 * num_2
-
-    def divide(self, divisor, dividend):
-        return dividend / divisor
+        self.btn_pc.grid(row=1, column=2)
 
 root = tk.Tk()
 calc = Calculator(root)
