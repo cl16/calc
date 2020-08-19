@@ -3,6 +3,29 @@ Object-based version of calculator app.
 """
 import tkinter as tk  
 
+def num_sep(num_str):
+    """
+    Separate with a comma (',') after every 3rd non-starting digit.
+    """
+    result = ''
+    decimal = False
+    if '.' in num_str:
+        decimal = True
+        num_str_split = num_str.split('.')
+        num_str = num_str_split[0]
+        decimal_digits = num_str_split[-1]
+    num_str = num_str[::-1]
+    chars = 0
+    for char in num_str:
+        if chars != 0 and chars % 3 == 0:
+            result += ','
+            chars = 0
+        chars += 1
+        result += char
+    if decimal:
+        return result[::-1] + '.' + decimal_digits
+    else:
+        return result[::-1]
 
 class Calculator(tk.Frame):
 
@@ -30,6 +53,9 @@ class Calculator(tk.Frame):
                     self.subtract: 1,
                     self.equals:   0}
 
+        # set initial field value to 0:
+        self.put_field('0')
+
     def create_field(self):
         self.field = tk.Entry(self)
         self.field.grid(row=0,
@@ -42,6 +68,9 @@ class Calculator(tk.Frame):
 
     def get_field(self):
         field_str = self.field.get()
+        if field_str == '':
+            return None
+        field_str = field_str.replace(',', '')
         if '.' in field_str:
             num = float(field_str)
             if num % 1 == 0:
@@ -57,6 +86,7 @@ class Calculator(tk.Frame):
         if current:
             current_val = self.field.get()
         value = current_val + str(value) if current else str(value)
+        value = num_sep(value) # separate digits with commas
         self.field.delete(0, tk.END)
         self.field.insert(0, value)
 
@@ -88,30 +118,38 @@ class Calculator(tk.Frame):
                 self.opr = opr
                 self.val = self.get_field()
 
-
     def per_click(self):
-        return None
+        if self.field_overwrite == True:
+            self.put_field('0.')
+            self.field_overwrite = False
+        else:
+            field_val = str(self.get_field())
+            if '.' not in field_val:
+                new_field_val = field_val + '.'
+                self.put_field(new_field_val) # current val concatenation handled before put_field()
 
     def clear_field(self):
-        self.field.delete(0, tk.END)
+        self.put_field('0')
         self.temp_val = None
         self.temp_op = None
+        self.last_num = None
+        self.last_opr = None
         self.field_overwrite = True
 
     def equals(self, temp=False):
         self.field_overwrite = True
         temp = True if self.temp_val != None else temp
         cur_opr = self.opr if self.opr != None else self.last_opr
-        if temp==False:
+        if cur_opr == None:
+            return None # no opr selected at all yet
+        elif temp==False:
             self.val = cur_opr(self.val, self.last_num) # change to multi-digit num ability
-            self.field.delete(0, tk.END)
-            self.field.insert(0, str(self.val))
+            self.put_field(self.val)
             self.opr = None
         else:
             self.val = cur_opr(self.val, self.last_num)
             self.val = self.temp_opr(self.temp_val, self.val)
-            self.field.delete(0, tk.END)
-            self.field.insert(0, str(self.val))
+            self.put_field(self.val)
             self.opr = None
 
             # used temp_val, temp_opr, reset:
@@ -206,3 +244,4 @@ class Calculator(tk.Frame):
 root = tk.Tk()
 calc = Calculator(root)
 calc.mainloop()
+
