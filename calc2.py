@@ -1,12 +1,12 @@
 """
-Object-based version of calculator app.
+Object-based version of calculator app, based off simple calculator from
+Free Code Camp Tkinter tutorial.
 """
 import tkinter as tk  
 
+
 def num_sep(num_str):
-    """
-    Separate with a comma (',') after every 3rd non-starting digit.
-    """
+    """Separate with a comma (',') after every 3rd non-starting digit"""
     result = ''
     decimal = False
     if '.' in num_str:
@@ -15,6 +15,7 @@ def num_sep(num_str):
         num_str = num_str_split[0]
         decimal_digits = num_str_split[-1]
     num_str = num_str[::-1]
+    
     chars = 0
     for char in num_str:
         if chars != 0 and chars % 3 == 0:
@@ -22,10 +23,12 @@ def num_sep(num_str):
             chars = 0
         chars += 1
         result += char
+    
     if decimal:
         return result[::-1] + '.' + decimal_digits
     else:
         return result[::-1]
+
 
 class Calculator(tk.Frame):
 
@@ -37,22 +40,17 @@ class Calculator(tk.Frame):
         self.create_buttons() 
         self.field_overwrite = True
         self.sign = True
-
         self.val = None
         self.opr = None
-
         self.last_num = None
         self.last_opr = None
-
         self.temp_val = None
         self.temp_opr = None
-        
         self.ord = {self.multiply: 2,
                     self.divide:   2,
                     self.add:      1,
                     self.subtract: 1,
                     self.equals:   0}
-
         # set initial field value to 0:
         self.put_field('0')
 
@@ -67,30 +65,35 @@ class Calculator(tk.Frame):
                         ipady=10)
 
     def get_field(self):
+        """Extract values from window field."""
         field_str = self.field.get()
         if field_str == '':
             return None
         field_str = field_str.replace(',', '')
         if '.' in field_str:
+            if field_str[-1] == '.': # if in process of entering decimal
+                return field_str
             num = float(field_str)
-            if num % 1 == 0:
-                num = int(num)
+            # if num % 1 == 0:
+            #     num = int(num)
         else:
             num = int(field_str)
         return num
 
     def put_field(self, value, current=False):
+        """Write values to window field."""
         if isinstance(value, float):
-            if value % 1 == 0:
+            if value != 0 and value % 1 == 0:
                 value = int(value)
         if current:
-            current_val = self.field.get()
+            current_val = str(self.get_field())
         value = current_val + str(value) if current else str(value)
         value = num_sep(value) # separate digits with commas
         self.field.delete(0, tk.END)
         self.field.insert(0, value)
 
     def num_click(self, num):
+        """Button-click of calculator numbers."""
         if self.field_overwrite == True:
             self.put_field(num)
             self.last_num = self.get_field()
@@ -100,6 +103,7 @@ class Calculator(tk.Frame):
             self.last_num = self.get_field()
     
     def opr_click(self, opr):
+        """Button-click of calculator "operator" buttons. I.e. +, -."""
         self.field_overwrite = True
         self.last_opr = opr
         if self.opr != None and self.ord[opr] > self.ord[self.opr]:
@@ -119,6 +123,7 @@ class Calculator(tk.Frame):
                 self.val = self.get_field()
 
     def per_click(self):
+        """Button-click of decimal "dot"."""
         if self.field_overwrite == True:
             self.put_field('0.')
             self.field_overwrite = False
@@ -129,6 +134,10 @@ class Calculator(tk.Frame):
                 self.put_field(new_field_val) # current val concatenation handled before put_field()
 
     def clear_field(self):
+        """
+        Clear window field and all temporary values, restore to initial
+        state.
+        """
         self.put_field('0')
         self.temp_val = None
         self.temp_op = None
@@ -137,6 +146,11 @@ class Calculator(tk.Frame):
         self.field_overwrite = True
 
     def equals(self, temp=False):
+        """
+        Finalize operation or chain of operations.
+
+        :param temp: bool, if lower-order pending operation
+        """
         self.field_overwrite = True
         temp = True if self.temp_val != None else temp
         cur_opr = self.opr if self.opr != None else self.last_opr
@@ -169,6 +183,7 @@ class Calculator(tk.Frame):
         return dividend / divisor
 
     def plusMinus(self):
+        """Set sign of field value in-place."""
         field_val = self.get_field()
         if field_val == 0:
             return None
@@ -176,6 +191,13 @@ class Calculator(tk.Frame):
             value = field_val * -1
             self.field_overwrite=True
             self.num_click(value)
+
+    def percent(self):
+        """Convert field value to fraction of 100."""
+        field_val = self.get_field()
+        percentage = field_val / 100
+        self.put_field(percentage)
+        self.field_overwrite = True
 
     def create_buttons(self):
         self.btn_1 = tk.Button(self, text="1", height=3, width=6,
@@ -216,7 +238,7 @@ class Calculator(tk.Frame):
         self.btn_pm = tk.Button(self, text="+/-", height=3, width=6,
                 command=self.plusMinus)
         self.btn_pc = tk.Button(self, text="%", height=3, width=6,
-                command=lambda: None)
+                command=self.percent)
 
         # Place buttons:
         self.btn_1.grid(row=4, column=0)
@@ -240,6 +262,7 @@ class Calculator(tk.Frame):
         self.btn_p.grid(row=5, column=2)
         self.btn_pm.grid(row=1, column=1)
         self.btn_pc.grid(row=1, column=2)
+
 
 root = tk.Tk()
 calc = Calculator(root)
